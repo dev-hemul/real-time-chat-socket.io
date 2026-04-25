@@ -1,5 +1,6 @@
 import {useEffect, useState, useRef} from "react";
 import {socket} from "./lib/socket";
+import EmojiPicker from './lib/EmojiPicker';
 
 function App() {
   const [message, setMessage] = useState("");
@@ -9,6 +10,7 @@ function App() {
   const [room, setRoom] = useState("");
   const [typingUsers, setTypingUsers] = useState([]);
   const messagesEndRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   useEffect(() => {
     const savedUsername = localStorage.getItem("username");
@@ -176,6 +178,11 @@ function App() {
     }, 800);
   };
 
+  const onEmojiClick = (emojiData) => {
+    setMessage(prev => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
   return (
     <div className="fixed inset-0 flex flex-col bg-slate-950 text-white overflow-hidden">
 
@@ -237,7 +244,7 @@ function App() {
                 {msg.user}
               </div>
 
-              <div className="text-base sm:text-sm leading-snug">
+              <div className="text-xl sm:text-lg leading-snug">
                 {msg.text}
               </div>
 
@@ -260,6 +267,16 @@ function App() {
         </div>
       )}
       <div className="flex items-center gap-2 p-3 bg-slate-900 border-t border-slate-800">
+
+        <div className="relative">
+          <button
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="px-2 py-2 text-xl bg-slate-700 rounded-xl"
+          >
+            😊
+          </button>
+          {showEmojiPicker && <EmojiPicker width={400} height={450} onEmojiClick={onEmojiClick} />}
+        </div>
 
         <input
           value={message}

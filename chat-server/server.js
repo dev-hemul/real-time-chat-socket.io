@@ -4,6 +4,9 @@ import http from "http";
 import {Server} from "socket.io";
 import mongoose from "mongoose";
 import {Message} from "./models/Message.js";
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 await mongoose.connect(process.env.MONGO_URI);
 
@@ -18,6 +21,8 @@ const io = new Server(server, {
     origin: "*" // потом ограничим
   }
 });
+
+app.use(express.static(path.join(__dirname, '../chat-client/dist')));
 
 // базовый endpoint (не обязателен, но удобно проверить)
 app.get("/", (req, res) => {

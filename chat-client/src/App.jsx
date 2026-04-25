@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useState, useRef} from "react";
 import {socket} from "./lib/socket";
 
 function App() {
@@ -8,6 +8,7 @@ function App() {
   const [isJoined, setIsJoined] = useState(false);
   const [room, setRoom] = useState("");
   const [typingUsers, setTypingUsers] = useState([]);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const savedUsername = localStorage.getItem("username");
@@ -64,6 +65,10 @@ function App() {
       socket.off("typing:update");
     };
   }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
+  }, [messages, typingUsers]);
 
   const sendMessage = () => {
     if (!message.trim()) return;
@@ -172,27 +177,28 @@ function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-slate-950 text-white">
+    <div className="fixed inset-0 flex flex-col bg-slate-950 text-white overflow-hidden">
 
       {/* HEADER */}
-      <div className="flex justify-between items-center px-5 py-3 bg-slate-900 border-b border-slate-800 shadow-md">
-        <div className="flex flex-col">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 px-4 py-3 bg-slate-900 border-b border-slate-800 shadow-md">
+        <div className="flex justify-between items-center">
           <h1 className="text-lg font-semibold tracking-wide">Chat</h1>
+          <div className="sm:hidden px-2 py-0.5 text-xs bg-slate-800 rounded-full">
+            #{room}
+          </div>
         </div>
 
-        <div className="px-3 py-1 text-xs bg-slate-800 rounded-full text-slate-300 border border-slate-700">
+        <div className="hidden sm:block px-3 py-1 text-xs bg-slate-800 rounded-full text-slate-300 border border-slate-700">
           #{room}
         </div>
 
-        <div className="flex items-center gap-3">
-
+        <div className="flex justify-between items-center gap-3">
           <button
-          onClick={() => socket.emit("chat:clear", {room})}
-          className="px-3 py-1 text-xs bg-yellow-600 hover:bg-yellow-500 rounded-full transition"
-        >
-          Clear chat
-        </button>
-
+            onClick={() => socket.emit("chat:clear", {room})}
+            className="px-3 py-1 text-xs bg-yellow-600 hover:bg-yellow-500 rounded-full transition"
+          >
+            Clear chat
+          </button>
           <button
             onClick={handleLeaveRoom}
             className="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 rounded-full transition"
@@ -200,7 +206,6 @@ function App() {
             Leave
           </button>
         </div>
-
       </div>
 
       {/* MESSAGES */}
@@ -209,7 +214,7 @@ function App() {
         {messages.map((msg) => (
           <div
             key={msg._id || msg.id}
-            className={`flex items-end gap-2 max-w-[75%] ${
+            className={`flex items-end gap-2 max-w-[90%] sm:max-w-[75%] ${
               msg.user === username ? "self-end flex-row-reverse" : "self-start"
             }`}
           >
@@ -228,25 +233,23 @@ function App() {
                   : "bg-slate-800 text-slate-100 rounded-bl-md"
               }`}
             >
-              <div className="text-[11px] opacity-70 mb-1">
+              <div className="text-[14px] sm:text-xs opacity-70 mb-1">
                 {msg.user}
               </div>
 
-              <div className="leading-snug">
+              <div className="text-base sm:text-sm leading-snug">
                 {msg.text}
               </div>
 
               {/* time */}
-              <div className="text-[10px] opacity-40 mt-1 text-right">
-                {msg.createdAt
-                  ? new Date(msg.createdAt).toLocaleTimeString().slice(0, 5)
-                  : ""}
+              <div className="text-[11px] sm:text-[10px] opacity-40 mt-1 text-right">
+                {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString().slice(0, 5) : ""}
               </div>
             </div>
 
           </div>
         ))}
-
+        <div ref={messagesEndRef} />
       </div>
 
       {/* INPUT */}
@@ -261,6 +264,11 @@ function App() {
         <input
           value={message}
           onChange={handleTyping}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && message.trim()) {
+              sendMessage();
+            }
+          }}
           placeholder="Write a message..."
           className="flex-1 px-4 py-2 rounded-xl bg-slate-800 outline-none border border-slate-700 focus:border-blue-500 transition"
         />
